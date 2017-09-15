@@ -1,0 +1,23 @@
+{
+
+  "manifest_version": 2,
+  "name": "Tab Save/Restore",
+  "description": "Save and restore your tabs at once",
+  "version": "1.0",
+  "applications": {
+    "gecko": {
+      "strict_min_version": "54.0a1"
+    }
+  },
+  "icons": {
+    "48": "icons/beasts-48.png"
+  },
+
+  "permissions": ["storage", "tabs"],
+
+  "browser_action": {
+    "default_icon": "icons/beasts-32.png",
+    "default_title": "Save/Restore",
+    "default_popup": "popup/choose_sr.html"
+  }
+}
