@@ -10,15 +10,12 @@
       "id": "avbhatt@umich.edu"
     }
   },
-  "icons": {
-    "48": "icons/beasts-48.png"
-  },
 
   "permissions": ["storage", "tabs"],
 
   "browser_action": {
     "browser_style": true,
-    "default_icon": "icons/beasts-32.png",
+    "default_icon": "icons/tabs-32.png",
     "default_title": "Save/Restore",
     "default_popup": "popup/save_restore.html"
   }
