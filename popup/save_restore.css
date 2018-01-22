@@ -1,4 +1,4 @@
-html, body {
+/*html, body {
   width: 100px;
 }
 
@@ -24,4 +24,8 @@ html, body {
 
 .restore:hover {
  background-color: #EAEAC9;
+}*/
+
+.wrapper {
+	text-align: center;
 }
