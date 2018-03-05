@@ -45,17 +45,19 @@ class List extends React.Component {
     handleLinkClick(event) {
         const target = event.target;
         browser.tabs.create({ 'url': target.name });
-        var url_list = this.state.links;
-        url_list.delete(target.name);
-        var array_url_list = Array.from(url_list);
-        browser.storage.local.set({ 'urls': array_url_list });
-        this.setState({ links: url_list });
+        this.setState({ links: this.state.links });
+        //var url_list = this.state.links;
+        //don't delete until save is pressed again
+        //url_list.delete(target.name);
+        //var array_url_list = Array.from(url_list);
+        //browser.storage.local.set({ 'urls': array_url_list });
+        //this.setState({ links: url_list });
 
         //if one window has been opened separately, turn the rest into one big window :lazy:
-        var tabNum = [array_url_list.length];
-        browser.storage.local.set({ 'numTabs': tabNum });
+        //var tabNum = [array_url_list.length];
+        //browser.storage.local.set({ 'numTabs': tabNum });
 
-        render();
+        //render();
     }
 
     render() {
@@ -92,6 +94,10 @@ class Space extends React.Component {
             windowTypes: ["normal"]
         });
 
+        //clear existing first
+        browser.storage.local.remove('urls');
+        browser.storage.local.remove('numTabs');
+
         openWindows.then(windows => {
             for (let w of windows) {
                 if(w.incognito){
@@ -111,6 +117,7 @@ class Space extends React.Component {
                     //console.log(t.url);
                 };
             }
+            //then save
             browser.storage.local.set({ 'urls': toSave });
             browser.storage.local.set({ 'numTabs': numTabs });
         });
@@ -136,9 +143,9 @@ class Space extends React.Component {
 
     handleAllClick() {
         var urlObj = browser.storage.local.get('urls');
-        browser.storage.local.remove('urls');
+        //browser.storage.local.remove('urls');
         var tabNumObj= browser.storage.local.get('numTabs');
-        browser.storage.local.remove('numTabs');
+        //browser.storage.local.remove('numTabs');
 
         this.setState({ saves: true });
         urlObj.then(urlsObj => {
@@ -165,11 +172,10 @@ class Space extends React.Component {
     }
 
     render() {
-        const saves = this.state.saves;
         let s_but = null;
         let r_but = null;
         let content = null;
-        if (saves) {
+        if (this.state.saves) {
             s_but = React.createElement(Button, { onClick: this.handleSaveClick, name: "Save" });
             r_but = React.createElement(Button, { onClick: this.handleRestoreClick, name: "Restore" });
             return React.createElement(
