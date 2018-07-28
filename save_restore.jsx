@@ -12,6 +12,7 @@ class List extends React.Component{
 		this.handleLinkClick = this.handleLinkClick.bind(this);
 	}
 
+	// Display shortened forms of url
 	urlShorten(url) {
 		let name = url;
 		if (url.length > 50){
@@ -21,13 +22,15 @@ class List extends React.Component{
 		}
 		return name;
 	}
+
+	// Acquire list of urls from open tabs/windows
 	componentDidMount() {
 		var self = this;
 		let url_list = new Set();
 		var show = browser.storage.local.get('urls');
 		var next = show.then(function(urls){
 			if (Object.keys(urls).length === 0){
-				console.log("No URLS saved");
+				// console.log("No URLS saved");
 			}
 			else {
 				urls.urls.forEach(function(url) {
@@ -35,17 +38,13 @@ class List extends React.Component{
 				});
 			}
 			self.setState({links: url_list});
-			//console.log(self.state.links);
 		});
 	}
 
 	handleLinkClick(event){
 		const target = event.target;
 		browser.tabs.create({ 'url': target.name });
-		var url_list = this.state.links;
-		url_list.delete(target.name);
-		browser.storage.local.set({'urls': Array.from(url_list)});
-		this.setState({ links: url_list});
+		this.setState({ links: this.state.links });
 	}
 
 	render() {
@@ -70,14 +69,40 @@ class Space extends React.Component{
 	}
 
 	handleSaveClick() {
-		var openTabs = browser.tabs.query({currentWindow: true});
-		openTabs.then((tabs) => {
-			var toSave = [];
-			for (let t of tabs){
-				toSave.push(t.url);
-			};
-			browser.storage.local.set({'urls': toSave});
+		var toSave = [];
+		var numTabs = [];
+		var openWindows = browser.windows.getAll({
+			populate: true,
+			windowTypes: ["normal"]
 		});
+
+		// clear existing first
+		browser.storage.local.remove('urls');
+		browser.storage.local.remove('numTabs');
+
+		openWindows.then(windows => {
+			for (let w of windows) {
+				// ignore private windows
+				if(w.incognito){
+					continue;
+				}
+				numTabs.push(w.tabs.length);
+				for (let t of w.tabs) {
+					var url = t.url;
+					// ignore 'about' pages
+					if(url.substr(0, 5) === "about"){
+						--numTabs[numTabs.size - 1];
+						continue;
+					}
+
+					toSave.push(url);
+				};
+			}
+			
+			browser.storage.local.set({ 'urls': toSave });
+			browser.storage.local.set({ 'numTabs': numTabs });
+		});
+		
 		this.setState({saves: true});
 	}
 
@@ -86,7 +111,7 @@ class Space extends React.Component{
 		var self = this;
 		toRestore.then((urls) => {
 			if (Object.keys(urls).length === 0){
-				console.log("No URLS saved");
+				// console.log("No URLS saved");
 			}
 			else {
 				self.setState({saves: false});
@@ -99,26 +124,38 @@ class Space extends React.Component{
 	}
 
 	handleAllClick() {
-		var toRestore = browser.storage.local.get('urls');
-		browser.storage.local.remove('urls');
-		this.setState({saves: true});
-		toRestore.then((urls) => {
-			if (Object.keys(urls).length === 0) {
-				console.log("No URLS saved");
+		var urlObj = browser.storage.local.get('urls');
+		var tabNumObj= browser.storage.local.get('numTabs');
+
+		this.setState({ saves: true });
+
+		urlObj.then(urlsObj => {
+			var urls = urlsObj.urls;
+			if (urls.length === 0) {
+				// console.log("No URLS saved");
 			} else {
-				urls.urls.forEach(function (url) {
-					browser.tabs.create({ 'url': url });
+				tabNumObj.then(tabNumObj => {
+					var tabNum = tabNumObj.numTabs;
+					var tabIndex = 0;
+					for(var i = 0; i < tabNum.length; i++) {
+						var jump = tabNum[i];
+						var tabs = urls.slice(tabIndex, tabIndex + jump);
+						if(tabs.length == 0){
+							continue;
+						}
+						browser.windows.create({ 'url': tabs });
+						tabIndex += jump;
+					}
 				});
 			}
 		});
 	}
 
 	render() {
-		const saves = this.state.saves;
 		let s_but = null;
 		let r_but = null;
 		let content = null;
-		if (saves) {
+		if (this.state.saves) {
 			s_but = <Button onClick={this.handleSaveClick} name="Save"/>;
 			r_but = <Button onClick={this.handleRestoreClick} name="Restore"/>;
 			return (
