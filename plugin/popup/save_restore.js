@@ -31,22 +31,23 @@ class List extends React.Component {
 	componentDidMount() {
 		var self = this;
 		let url_list = new Set();
-		var show = browser.storage.local.get('urls');
-		var next = show.then(function (urls) {
-			if (Object.keys(urls).length === 0) {
-				// console.log("No URLS saved");
-			} else {
-				urls.urls.forEach(function (url) {
-					url_list.add(url);
-				});
+		chrome.storage.local.get('urls', 
+			urls => {
+				if (Object.keys(urls).length === 0) {
+					// console.log("No URLS saved");
+				} else {
+					urls.urls.forEach(function (url) {
+						url_list.add(url);
+					});
+				}
+				self.setState({ links: url_list });
 			}
-			self.setState({ links: url_list });
-		});
+		);
 	}
 
 	handleLinkClick(event) {
 		const target = event.target;
-		browser.tabs.create({ 'url': target.name });
+		chrome.tabs.create({ 'url': target.name });
 		this.setState({ links: this.state.links });
 	}
 
@@ -79,51 +80,53 @@ class Space extends React.Component {
 	handleSaveClick() {
 		var toSave = [];
 		var numTabs = [];
-		var openWindows = browser.windows.getAll({
-			populate: true,
-			windowTypes: ["normal"]
-		});
-
 		// clear existing first
-		browser.storage.local.remove('urls');
-		browser.storage.local.remove('numTabs');
+		chrome.storage.local.remove('urls');
+		chrome.storage.local.remove('numTabs');
 
-		openWindows.then(windows => {
-			for (let w of windows) {
-				// ignore private windows
-				if (w.incognito) {
-					continue;
-				}
-				numTabs.push(w.tabs.length);
-				for (let t of w.tabs) {
-					var url = t.url;
-					// ignore 'about' pages
-					if (url.substr(0, 5) === "about") {
-						--numTabs[numTabs.size - 1];
+		chrome.windows.getAll(
+			{
+				populate: true,
+				windowTypes: ["normal"]
+			}, 
+			windows => {
+				for (let w of windows) {
+					// ignore private windows
+					if (w.incognito) {
 						continue;
 					}
+					numTabs.push(w.tabs.length);
+					for (let t of w.tabs) {
+						var url = t.url;
+						// ignore 'about' pages
+						if (url.substr(0, 6) === "chrome") {
+							--numTabs[numTabs.size - 1];
+							continue;
+						}
 
-					toSave.push(url);
-				};
+						toSave.push(url);
+					};
+				}
+
+				chrome.storage.local.set({ 'urls': toSave });
+				chrome.storage.local.set({ 'numTabs': numTabs });
 			}
-
-			browser.storage.local.set({ 'urls': toSave });
-			browser.storage.local.set({ 'numTabs': numTabs });
-		});
+		);
 
 		this.setState({ saves: true });
 	}
 
 	handleRestoreClick() {
-		var toRestore = browser.storage.local.get('urls');
 		var self = this;
-		toRestore.then(urls => {
-			if (Object.keys(urls).length === 0) {
-				// console.log("No URLS saved");
-			} else {
-				self.setState({ saves: false });
+		chrome.storage.local.get('urls',
+			urls => {
+				if (Object.keys(urls).length === 0) {
+					// console.log("No URLS saved");
+				} else {
+					self.setState({ saves: false });
+				}
 			}
-		});
+		);
 	}
 
 	handleBackClick() {
@@ -131,31 +134,31 @@ class Space extends React.Component {
 	}
 
 	handleAllClick() {
-		var urlObj = browser.storage.local.get('urls');
-		var tabNumObj = browser.storage.local.get('numTabs');
-
 		this.setState({ saves: true });
-
-		urlObj.then(urlsObj => {
-			var urls = urlsObj.urls;
-			if (urls.length === 0) {
-				// console.log("No URLS saved");
-			} else {
-				tabNumObj.then(tabNumObj => {
-					var tabNum = tabNumObj.numTabs;
-					var tabIndex = 0;
-					for (var i = 0; i < tabNum.length; i++) {
-						var jump = tabNum[i];
-						var tabs = urls.slice(tabIndex, tabIndex + jump);
-						if (tabs.length == 0) {
-							continue;
+		var urlObj = chrome.storage.local.get('urls', 
+			urlsObj => {
+				var urls = urlsObj.urls;
+				if (urls.length === 0) {
+					// console.log("No URLS saved");
+				} else {
+					chrome.storage.local.get('numTabs',
+						tabNumObj => {
+							var tabNum = tabNumObj.numTabs;
+							var tabIndex = 0;
+							for (var i = 0; i < tabNum.length; i++) {
+								var jump = tabNum[i];
+								var tabs = urls.slice(tabIndex, tabIndex + jump);
+								if (tabs.length == 0) {
+									continue;
+								}
+								chrome.windows.create({ 'url': tabs });
+								tabIndex += jump;
+							}
 						}
-						browser.windows.create({ 'url': tabs });
-						tabIndex += jump;
-					}
-				});
+					);
+				}
 			}
-		});
+		);
 	}
 
 	render() {
