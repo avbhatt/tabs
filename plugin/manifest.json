@@ -3,13 +3,7 @@
   "name": "Tab Save/Restore",
   "description": "Save and restore your tabs at once",
   "version": "2.1",
-  "applications": {
-    "gecko": {
-      "strict_min_version": "54.0a1",
-      "id": "avbhatt@umich.edu"
-    }
-  },
-
+  
   "permissions": ["storage", "tabs"],
 
   "browser_action": {
