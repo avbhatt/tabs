@@ -2,7 +2,7 @@ function Button(props) {
 	var name = props.name;
 	return React.createElement(
 		'button',
-		{ onClick: props.onClick },
+		{ className: props.className, onClick: props.onClick },
 		name
 	);
 }
@@ -45,6 +45,7 @@ class List extends React.Component {
 	}
 
 	handleLinkClick(event) {
+		event.preventDefault();
 		const target = event.target;
 		browser.tabs.create({ 'url': target.name });
 		this.setState({ links: this.state.links });
@@ -53,14 +54,13 @@ class List extends React.Component {
 	render() {
 		const content = Array.from(this.state.links);
 		const list = content.map(url => React.createElement(
-			'div',
-			null,
-			React.createElement('input', { type: 'checkbox', name: url, onChange: this.handleLinkClick, checked: false }),
+			'a',
+			{ className: 'restore-menu-link', href: '', title: url, name: url, onClick: this.handleLinkClick },
 			this.urlShorten(url)
 		));
 		return React.createElement(
 			'div',
-			null,
+			{ className: 'restore-menu-link-list' },
 			list
 		);
 	}
@@ -73,7 +73,10 @@ class Space extends React.Component {
 		this.handleRestoreClick = this.handleRestoreClick.bind(this);
 		this.handleBackClick = this.handleBackClick.bind(this);
 		this.handleAllClick = this.handleAllClick.bind(this);
-		this.state = { saves: true };
+		this.state = {
+			saves: true,
+			saveBtnText: "Save Tabs"
+		};
 	}
 
 	handleSaveClick() {
@@ -111,7 +114,16 @@ class Space extends React.Component {
 			browser.storage.local.set({ 'numTabs': numTabs });
 		});
 
-		this.setState({ saves: true });
+		this.setState({
+			saves: true,
+			saveBtnText: "Saved!"
+		});
+
+		clearTimeout(this.saveBtnMessageTimeout);
+
+		this.saveBtnMessageTimeout = setTimeout(() => {
+			this.setState({ saveBtnText: "Save Tabs" });
+		}, 1000);
 	}
 
 	handleRestoreClick() {
@@ -163,22 +175,32 @@ class Space extends React.Component {
 		let r_but = null;
 		let content = null;
 		if (this.state.saves) {
-			s_but = React.createElement(Button, { onClick: this.handleSaveClick, name: 'Save' });
-			r_but = React.createElement(Button, { onClick: this.handleRestoreClick, name: 'Restore' });
+			s_but = React.createElement(Button, { className: 'save-restore-btn', onClick: this.handleSaveClick, name: this.state.saveBtnText });
+			r_but = React.createElement(Button, { className: 'save-restore-btn', onClick: this.handleRestoreClick, name: 'Restore' });
 			return React.createElement(
 				'div',
-				{ className: 'wrapper' },
+				{ className: 'save-restore-container' },
 				s_but,
 				r_but
 			);
 		} else {
-			let back = React.createElement(Button, { onClick: this.handleBackClick, name: 'Go Back' });
-			let all = React.createElement(Button, { onClick: this.handleAllClick, name: 'Restore All' });
+			let back = React.createElement(Button, { className: 'back-btn', onClick: this.handleBackClick, name: 'Back' });
+			let all = React.createElement(Button, { className: 'restore-all-btn', onClick: this.handleAllClick, name: 'Restore All' });
 			return React.createElement(
 				'div',
-				{ className: 'wrapper' },
-				back,
-				all,
+				{ className: 'restore-menu-container' },
+				React.createElement(
+					'div',
+					{ className: 'restore-menu-action-bar' },
+					back,
+					all
+				),
+				React.createElement(
+					'div',
+					{ className: 'restore-menu-header' },
+					'Saved Tabs:'
+				),
+				React.createElement('div', { className: 'restore-menu-divider' }),
 				React.createElement(List, null)
 			);
 		}

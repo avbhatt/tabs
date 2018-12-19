@@ -1,6 +1,6 @@
 function Button(props) {
 	var name = props.name;
-	return <button onClick={props.onClick}>{name}</button>
+	return <button className={props.className} onClick={props.onClick}>{name}</button>
 }
 
 class List extends React.Component{
@@ -42,6 +42,7 @@ class List extends React.Component{
 	}
 
 	handleLinkClick(event){
+		event.preventDefault();
 		const target = event.target;
 		browser.tabs.create({ 'url': target.name });
 		this.setState({ links: this.state.links });
@@ -49,9 +50,9 @@ class List extends React.Component{
 
 	render() {
 		const content = Array.from(this.state.links);
-		const list = content.map((url) => <div><input type="checkbox" name={url} onChange={this.handleLinkClick} checked={false}/>{this.urlShorten(url)}</div>);
+		const list = content.map((url) => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
 		return (
-			<div>
+			<div className="restore-menu-link-list">
 				{list}
 			</div>
 		);
@@ -65,7 +66,10 @@ class Space extends React.Component{
 		this.handleRestoreClick = this.handleRestoreClick.bind(this);
 		this.handleBackClick = this.handleBackClick.bind(this);
 		this.handleAllClick = this.handleAllClick.bind(this);
-		this.state = {saves: true};
+		this.state = {
+			saves: true,
+			saveBtnText: "Save Tabs"
+		};
 	}
 
 	handleSaveClick() {
@@ -103,7 +107,16 @@ class Space extends React.Component{
 			browser.storage.local.set({ 'numTabs': numTabs });
 		});
 		
-		this.setState({saves: true});
+		this.setState({
+			saves: true,
+			saveBtnText: "Saved!"
+		});
+
+		clearTimeout(this.saveBtnMessageTimeout);
+
+		this.saveBtnMessageTimeout = setTimeout(() => {
+			this.setState({ saveBtnText: "Save Tabs"});
+		}, 1000)
 	}
 
 	handleRestoreClick() {
@@ -156,21 +169,27 @@ class Space extends React.Component{
 		let r_but = null;
 		let content = null;
 		if (this.state.saves) {
-			s_but = <Button onClick={this.handleSaveClick} name="Save"/>;
-			r_but = <Button onClick={this.handleRestoreClick} name="Restore"/>;
+			s_but = <Button className="save-restore-btn" onClick={this.handleSaveClick} name={this.state.saveBtnText}/>;
+			r_but = <Button className="save-restore-btn" onClick={this.handleRestoreClick} name="Restore"/>;
 			return (
-				<div className="wrapper">
+				<div className="save-restore-container">
 					{s_but}
 					{r_but}
 				</div>
 			);
 		} else {
-			let back = <Button onClick={this.handleBackClick} name="Go Back"/>;
-			let all = <Button onClick={this.handleAllClick} name="Restore All"/>;
+			let back = <Button className="back-btn" onClick={this.handleBackClick} name="Back"/>;
+			let all = <Button className="restore-all-btn" onClick={this.handleAllClick} name="Restore All"/>;
 			return (
-				<div className="wrapper">
-					{back}
-					{all}
+				<div className="restore-menu-container">
+					<div className="restore-menu-action-bar">
+						{back}
+						{all}
+					</div>
+					<div className="restore-menu-header">
+						Saved Tabs:
+					</div>
+					<div className="restore-menu-divider"></div>
 					<List />
 				</div>
 			);
