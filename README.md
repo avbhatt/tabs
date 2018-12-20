@@ -34,6 +34,9 @@ Clicking the extension results in two options ```Save``` and ```Restore```.
 
 ## Changelog
 
+CSS Enhancements from [shikev](https://github.com/avbhatt/tabs/pull/5)
+- Improve look and feel of extension
+
 Changes from [sealj553](https://github.com/avbhatt/tabs/pull/1)
 - Allows for multi-window saving and restoration
 
