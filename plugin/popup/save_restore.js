@@ -11,16 +11,27 @@ class Restore extends React.Component {
     this.state = {
       restore: false
     };
-    this.handleWindowClick = this.handleWindowClick.bind(this);
+    this.handleRestoreWindowClick = this.handleRestoreWindowClick.bind(this);
     this.handleCurrentClick = this.handleCurrentClick.bind(this);
     this.handleNewClick = this.handleNewClick.bind(this);
+    this.handleBackClick = this.handleBackClick.bind(this);
+    this.handleOutsideClick = this.handleOutsideClick.bind(this);
   }
 
-  handleWindowClick(event) {
+  handleRestoreWindowClick(event) {
     event.preventDefault();
     this.setState({
       restore: true
     });
+    document.addEventListener('click', this.handleOutsideClick, false);
+  }
+
+  handleBackClick(event) {
+    event.preventDefault();
+    this.setState({
+      restore: false
+    });
+    document.removeEventListener('click', this.handleOutsideClick, false);
   }
 
   handleNewClick(event) {
@@ -29,6 +40,7 @@ class Restore extends React.Component {
     this.setState({
       restore: false
     });
+    document.removeEventListener('click', this.handleOutsideClick, false);
   }
 
   handleCurrentClick(event) {
@@ -37,6 +49,14 @@ class Restore extends React.Component {
     this.setState({
       restore: false
     });
+    document.removeEventListener('click', this.handleOutsideClick, false);
+  }
+
+  handleOutsideClick(event) {
+    this.setState({
+      restore: false
+    });
+    document.removeEventListener('click', this.handleOutsideClick, false);
   }
 
   render() {
@@ -46,23 +66,25 @@ class Restore extends React.Component {
       return React.createElement("div", {
         className: "restore-window-dropdown"
       }, React.createElement(Button, {
-        className: "restore-window-btn",
-        onClick: this.handleWindowClick,
-        name: "Restore"
-      }), React.createElement("a", {
-        className: "restore-window-here",
+        className: "restore-window-back-btn",
+        onClick: this.handleBackClick,
+        name: "Back"
+      }), React.createElement("div", {
+        className: "restore-window-dropdown-content"
+      }, React.createElement("a", {
+        className: "restore-window",
         onClick: this.handleCurrentClick
       }, "Current Window"), React.createElement("a", {
-        className: "restore-window-new",
+        className: "restore-window",
         onClick: this.handleNewClick
-      }, "New Window"));
+      }, "New Window")));
     } else {
       return React.createElement("div", {
         className: "restore-window-dropdown"
       }, React.createElement(Button, {
         className: "restore-window-btn",
-        onClick: this.handleWindowClick,
-        name: "Restore Window"
+        onClick: this.handleRestoreWindowClick,
+        name: "Restore To"
       }));
     }
   }
@@ -122,7 +144,7 @@ class Window extends React.Component {
       onClick: this.handleLinkClick
     }, this.urlShorten(url)));
     return React.createElement("div", {
-      className: "restore-menu-window-container"
+      className: "restore-window-container"
     }, React.createElement(Restore, {
       handleCurrentWindowClick: this.handleCurrentWindowClick,
       handleNewWindowClick: this.handleNewWindowClick
@@ -228,16 +250,9 @@ class Space extends React.Component {
 
     if (windows.length === 0 || windows.length > 1 && windows.length[0] === 0) {// console.log("No URLS saved");
     } else {
-      // Restore to existing window
-      windows[0].map(url => browser.tabs.create({
-        'url': url
-      })); // Create in new windows
-
-      for (let i = 1; i < windows.length; i++) {
-        browser.windows.create({
-          'url': windows[i]
-        });
-      }
+      windows.map(window => browser.windows.create({
+        'url': window
+      }));
     }
   }
 
@@ -294,8 +309,6 @@ class Space extends React.Component {
       }, React.createElement("div", {
         className: "restore-menu-action-bar"
       }, back, all), React.createElement("div", {
-        className: "restore-menu-header"
-      }), React.createElement("div", {
         className: "restore-menu-divider"
       }), windowList);
     }

@@ -8,43 +8,61 @@ class Restore extends React.Component {
 		this.state = {
 			restore: false
 		}
-		this.handleWindowClick = this.handleWindowClick.bind(this);
+		this.handleRestoreWindowClick = this.handleRestoreWindowClick.bind(this);
 		this.handleCurrentClick = this.handleCurrentClick.bind(this);
 		this.handleNewClick = this.handleNewClick.bind(this);
+		this.handleBackClick = this.handleBackClick.bind(this);
+		this.handleOutsideClick = this.handleOutsideClick.bind(this);
 	}
 
-	handleWindowClick(event) {
+	handleRestoreWindowClick(event) {
 		event.preventDefault();
 		this.setState({ restore: true });
+		document.addEventListener('click', this.handleOutsideClick, false);
+	}
+
+	handleBackClick(event) {
+		event.preventDefault();
+		this.setState({ restore: false });
+		document.removeEventListener('click', this.handleOutsideClick, false);
 	}
 
 	handleNewClick(event) {
 		event.preventDefault();
 		this.props.handleNewWindowClick(event);
 		this.setState({ restore: false });
+		document.removeEventListener('click', this.handleOutsideClick, false);
 	}
 
 	handleCurrentClick(event) {
 		event.preventDefault();
 		this.props.handleCurrentWindowClick(event);
 		this.setState({ restore: false });
+		document.removeEventListener('click', this.handleOutsideClick, false);
+	}
+
+	handleOutsideClick(event) {
+		this.setState({ restore: false });
+		document.removeEventListener('click', this.handleOutsideClick, false);
 	}
 
 	render() {
 		console.log("Restore Render");
 		if (this.state.restore) {
 			return (
-				<div className="restore-window-dropdown">
-					<Button className="restore-window-btn" onClick={this.handleWindowClick} name="Restore" />
-					<a className="restore-window-here" onClick={this.handleCurrentClick}>Current Window</a>
-					<a className="restore-window-new" onClick={this.handleNewClick}>New Window</a>
+			<div className="restore-window-dropdown">
+				<Button className="restore-window-back-btn" onClick={this.handleBackClick} name="Back" />
+				<div className="restore-window-dropdown-content">
+					<a className="restore-window" onClick={this.handleCurrentClick}>Current Window</a>
+					<a className="restore-window" onClick={this.handleNewClick}>New Window</a>
 				</div>
+			</div>
 			)
 
 		} else {
 			return (
 				<div className="restore-window-dropdown">
-					<Button className="restore-window-btn" onClick={this.handleWindowClick} name="Restore Window" />
+					<Button className="restore-window-btn" onClick={this.handleRestoreWindowClick} name="Restore To" />
 				</div>
 			)
 
@@ -91,7 +109,7 @@ class Window extends React.Component {
 
 		let list = this.props.window.map(url => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
 		return (
-			<div className="restore-menu-window-container">
+			<div className="restore-window-container">
 				<Restore handleCurrentWindowClick={this.handleCurrentWindowClick} handleNewWindowClick={this.handleNewWindowClick} />
 				<div className="restore-menu-link-list">
 					{list}
@@ -185,12 +203,7 @@ class Space extends React.Component {
 		if (windows.length === 0 || (windows.length > 1 && windows.length[0] === 0)) {
 			// console.log("No URLS saved");
 		} else {
-			// Restore to existing window
-			windows[0].map(url => browser.tabs.create({ 'url': url }));
-			// Create in new windows
-			for (let i = 1; i < windows.length; i++) {
-				browser.windows.create({ 'url': windows[i] });
-			}
+			windows.map(window => browser.windows.create({ 'url': window }));
 		}
 	}
 
@@ -230,8 +243,6 @@ class Space extends React.Component {
 					<div className="restore-menu-action-bar">
 						{back}
 						{all}
-					</div>
-					<div className="restore-menu-header">
 					</div>
 					<div className="restore-menu-divider"></div>
 					{windowList}
