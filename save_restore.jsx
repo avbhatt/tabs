@@ -1,17 +1,62 @@
 function Button(props) {
-	var name = props.name;
-	return <button className={props.className} onClick={props.onClick}>{name}</button>
+	return <button className={props.className} onClick={props.onClick}>{props.name}</button>
 }
 
-
-class List extends React.Component {
+class Restore extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			windowState: new Array()
-		};
-		this.handleLinkClick = this.handleLinkClick.bind(this);
+			restore: false
+		}
 		this.handleWindowClick = this.handleWindowClick.bind(this);
+		this.handleCurrentClick = this.handleCurrentClick.bind(this);
+		this.handleNewClick = this.handleNewClick.bind(this);
+	}
+
+	handleWindowClick(event) {
+		event.preventDefault();
+		this.setState({ restore: true });
+	}
+
+	handleNewClick(event) {
+		event.preventDefault();
+		this.props.handleNewWindowClick(event);
+		this.setState({ restore: false });
+	}
+
+	handleCurrentClick(event) {
+		event.preventDefault();
+		this.props.handleCurrentWindowClick(event);
+		this.setState({ restore: false });
+	}
+
+	render() {
+		console.log("Restore Render");
+		if (this.state.restore) {
+			return (
+				<div className="restore-window-dropdown">
+					<Button className="restore-window-btn" onClick={this.handleWindowClick} name="Restore" />
+					<a className="restore-window-here" onClick={this.handleCurrentClick}>Current Window</a>
+					<a className="restore-window-new" onClick={this.handleNewClick}>New Window</a>
+				</div>
+			)
+
+		} else {
+			return (
+				<div className="restore-window-dropdown">
+					<Button className="restore-window-btn" onClick={this.handleWindowClick} name="Restore Window" />
+				</div>
+			)
+
+		}
+	}
+}
+class Window extends React.Component {
+	constructor(props) {
+		super(props);
+		this.handleLinkClick = this.handleLinkClick.bind(this);
+		this.handleCurrentWindowClick = this.handleCurrentWindowClick.bind(this);
+		this.handleNewWindowClick = this.handleNewWindowClick.bind(this);
 	}
 
 	// Display shortened forms of url
@@ -25,58 +70,32 @@ class List extends React.Component {
 		return name;
 	}
 
-	// Acquire list of urls from open tabs/windows
-	componentDidMount() {
-		console.log("List Mount");
-		var self = this;
-		let windowList = new Array();
-		let windowsPromise = browser.storage.local.get('windows');
-		windowsPromise.then((result) => {
-			console.log(result);
-			if (Object.keys(result).length === 0) {
-				console.log("No URLS saved");
-			}
-			else {
-				let windows = result.windows;
-				console.log(windows);
-				windows.forEach((window) => windowList.push(window));
-			}
-			self.setState({ windowState: windowList });
-		});
-	}
-
 	handleLinkClick(event) {
 		event.preventDefault();
 		const target = event.target;
 		browser.tabs.create({ 'url': target.name });
-		this.setState({ links: this.state.links });
 	}
 
-	handleWindowClick(event) {
+	handleCurrentWindowClick(event) {
 		event.preventDefault();
+		this.props.window.forEach(url => browser.tabs.create({ 'url': url }));
+	}
+
+	handleNewWindowClick(event) {
+		event.preventDefault();
+		browser.windows.create({ 'url': this.props.window })
 	}
 
 	render() {
 		console.log("List Render");
-		const windows = Array.from(this.state.windowState);
-		console.log(windows);
 
-		let list = [];
-		if (windows.length == 1) {
-			list = windows[0].map(url => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
-		}
-		else {
-			for (let i = 0; i < windows.length; i++) {
-				list.push("Window " + i);
-				for (let j = 0; j < windows[i].length; j++) {
-					let url = windows[i][j];
-					list.push(<a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
-				}
-			}
-		}
+		let list = this.props.window.map(url => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
 		return (
-			<div className="restore-menu-link-list">
-				{list}
+			<div className="restore-menu-window-container">
+				<Restore handleCurrentWindowClick={this.handleCurrentWindowClick} handleNewWindowClick={this.handleNewWindowClick} />
+				<div className="restore-menu-link-list">
+					{list}
+				</div>
 			</div>
 		);
 	}
@@ -91,7 +110,8 @@ class Space extends React.Component {
 		this.handleAllClick = this.handleAllClick.bind(this);
 		this.state = {
 			saves: true,
-			saveBtnText: "Save Tabs"
+			saveBtnText: "Save Tabs",
+			windowState: new Array()
 		};
 	}
 
@@ -104,7 +124,6 @@ class Space extends React.Component {
 
 		// clear existing first
 		browser.storage.local.remove('windows');
-		// browser.storage.local.remove('numTabs');
 
 		let windows = [];
 		openWindows.then(result => {
@@ -113,27 +132,25 @@ class Space extends React.Component {
 				if (window.incognito) {
 					continue;
 				}
-				// numTabs.push(window.tabs.length);
 				let tabs = [];
 				for (let tab of window.tabs) {
 					let url = tab.url;
 					// ignore 'about' pages
 					if (url.substr(0, 5) === "about") {
-						// --numTabs[numTabs.size - 1];
 						continue;
 					}
 					tabs.push(url);
-					console.log(url);
 				};
 				windows.push(tabs);
-				console.log(tabs);
 			}
-			console.log(windows)
+			console.log("Windows Saved");
+			console.log(windows);
 			if (windows.length > 0 && windows[0].length > 0) {
 				browser.storage.local.set({ 'windows': windows });
 				self.setState({
 					saves: true,
-					saveBtnText: "Saved!"
+					saveBtnText: "Saved!",
+					windowState: windows
 				});
 				clearTimeout(self.saveBtnMessageTimeout);
 
@@ -142,18 +159,14 @@ class Space extends React.Component {
 				}, 1000)
 			}
 		});
-
-
-
 	}
 
 	handleRestoreClick() {
 		let windowsPromise = browser.storage.local.get('windows');
 		var self = this;
 		windowsPromise.then((result) => {
-			console.log(result);
 			if (Object.keys(result).length === 0) {
-				console.log("No URLS saved");
+				// console.log("No URLS saved");
 			}
 			else {
 				self.setState({ saves: false });
@@ -166,42 +179,37 @@ class Space extends React.Component {
 	}
 
 	handleAllClick() {
-		let windowsPromise = browser.storage.local.get('windows');
-		// var tabNumObj = browser.storage.local.get('numTabs');
 
 		this.setState({ saves: true });
+		let windows = this.state.windowState;
+		if (windows.length === 0 || (windows.length > 1 && windows.length[0] === 0)) {
+			// console.log("No URLS saved");
+		} else {
+			// Restore to existing window
+			windows[0].map(url => browser.tabs.create({ 'url': url }));
+			// Create in new windows
+			for (let i = 1; i < windows.length; i++) {
+				browser.windows.create({ 'url': windows[i] });
+			}
+		}
+	}
 
-		windowsPromise.then(result => {
-			let windows = result.windows;
-			if (windows.length === 0) {
+	componentDidMount() {
+		var self = this;
+		let windowsPromise = browser.storage.local.get('windows');
+		windowsPromise.then((result) => {
+			console.log(result);
+			if (Object.keys(result).length === 0) {
 				// console.log("No URLS saved");
-			} else {
-				// Restore to existing window
-				windows[0].map(url => browser.tabs.create({ 'url': url }));
-				// Create in new windows
-				for (let i = 1; i < windows.length; i++) {
-					browser.windows.create({ 'url': windows[i] });
-				}
-				// windows.map(window => browser.windows.create({'url': window}));
-				// tabNumObj.then(tabNumObj => {
-				// 	var tabNum = tabNumObj.numTabs;
-				// 	var tabIndex = 0;
-				// 	for (var i = 0; i < tabNum.length; i++) {
-				// 		var jump = tabNum[i];
-				// 		var tabs = windows.slice(tabIndex, tabIndex + jump);
-				// 		if (tabs.length == 0) {
-				// 			continue;
-				// 		}
-				// 		browser.windows.create({ 'url': tabs });
-				// 		tabIndex += jump;
-				// 	}
-				// });
+			}
+			else {
+				let windows = result.windows;
+				self.setState({ windowState: windows });
 			}
 		});
 	}
 
 	render() {
-		console.log("Space Render")
 		let saveButton = null;
 		let restoreButton = null;
 		if (this.state.saves) {
@@ -216,6 +224,7 @@ class Space extends React.Component {
 		} else {
 			let back = <Button className="back-btn" onClick={this.handleBackClick} name="Back" />;
 			let all = <Button className="restore-all-btn" onClick={this.handleAllClick} name="Restore All" />;
+			let windowList = this.state.windowState.map(window => <Window window={window} />);
 			return (
 				<div className="restore-menu-container">
 					<div className="restore-menu-action-bar">
@@ -223,10 +232,9 @@ class Space extends React.Component {
 						{all}
 					</div>
 					<div className="restore-menu-header">
-						Saved Tabs:
 					</div>
 					<div className="restore-menu-divider"></div>
-					<List />
+					{windowList}
 				</div>
 			);
 		}
