@@ -3,54 +3,77 @@ function Button(props) {
 	return <button className={props.className} onClick={props.onClick}>{name}</button>
 }
 
-class List extends React.Component{
+
+class List extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			links: new Set()
+			windowState: new Array()
 		};
 		this.handleLinkClick = this.handleLinkClick.bind(this);
+		this.handleWindowClick = this.handleWindowClick.bind(this);
 	}
 
 	// Display shortened forms of url
 	urlShorten(url) {
 		let name = url;
-		if (url.length > 50){
-			name = url.substr(0,33);
+		if (url.length > 50) {
+			name = url.substr(0, 33);
 			name += "...";
-			name +=  url.substr(-14);
+			name += url.substr(-14);
 		}
 		return name;
 	}
 
 	// Acquire list of urls from open tabs/windows
 	componentDidMount() {
+		console.log("List Mount");
 		var self = this;
-		let url_list = new Set();
-		var show = browser.storage.local.get('urls');
-		var next = show.then(function(urls){
-			if (Object.keys(urls).length === 0){
-				// console.log("No URLS saved");
+		let windowList = new Array();
+		let windowsPromise = browser.storage.local.get('windows');
+		windowsPromise.then((result) => {
+			console.log(result);
+			if (Object.keys(result).length === 0) {
+				console.log("No URLS saved");
 			}
 			else {
-				urls.urls.forEach(function(url) {
-					url_list.add(url);
-				});
+				let windows = result.windows;
+				console.log(windows);
+				windows.forEach((window) => windowList.push(window));
 			}
-			self.setState({links: url_list});
+			self.setState({ windowState: windowList });
 		});
 	}
 
-	handleLinkClick(event){
+	handleLinkClick(event) {
 		event.preventDefault();
 		const target = event.target;
 		browser.tabs.create({ 'url': target.name });
 		this.setState({ links: this.state.links });
 	}
 
+	handleWindowClick(event) {
+		event.preventDefault();
+	}
+
 	render() {
-		const content = Array.from(this.state.links);
-		const list = content.map((url) => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
+		console.log("List Render");
+		const windows = Array.from(this.state.windowState);
+		console.log(windows);
+
+		let list = [];
+		if (windows.length == 1) {
+			list = windows[0].map(url => <a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
+		}
+		else {
+			for (let i = 0; i < windows.length; i++) {
+				list.push("Window " + i);
+				for (let j = 0; j < windows[i].length; j++) {
+					let url = windows[i][j];
+					list.push(<a className="restore-menu-link" href="" title={url} name={url} onClick={this.handleLinkClick}>{this.urlShorten(url)}</a>);
+				}
+			}
+		}
 		return (
 			<div className="restore-menu-link-list">
 				{list}
@@ -59,7 +82,7 @@ class List extends React.Component{
 	}
 }
 
-class Space extends React.Component{
+class Space extends React.Component {
 	constructor(props) {
 		super(props);
 		this.handleSaveClick = this.handleSaveClick.bind(this);
@@ -73,113 +96,126 @@ class Space extends React.Component{
 	}
 
 	handleSaveClick() {
-		var toSave = [];
-		var numTabs = [];
+		var self = this;
 		var openWindows = browser.windows.getAll({
 			populate: true,
 			windowTypes: ["normal"]
 		});
 
 		// clear existing first
-		browser.storage.local.remove('urls');
-		browser.storage.local.remove('numTabs');
+		browser.storage.local.remove('windows');
+		// browser.storage.local.remove('numTabs');
 
-		openWindows.then(windows => {
-			for (let w of windows) {
+		let windows = [];
+		openWindows.then(result => {
+			for (let window of result) {
 				// ignore private windows
-				if(w.incognito){
+				if (window.incognito) {
 					continue;
 				}
-				numTabs.push(w.tabs.length);
-				for (let t of w.tabs) {
-					var url = t.url;
+				// numTabs.push(window.tabs.length);
+				let tabs = [];
+				for (let tab of window.tabs) {
+					let url = tab.url;
 					// ignore 'about' pages
-					if(url.substr(0, 5) === "about"){
-						--numTabs[numTabs.size - 1];
+					if (url.substr(0, 5) === "about") {
+						// --numTabs[numTabs.size - 1];
 						continue;
 					}
-
-					toSave.push(url);
+					tabs.push(url);
+					console.log(url);
 				};
+				windows.push(tabs);
+				console.log(tabs);
 			}
-			
-			browser.storage.local.set({ 'urls': toSave });
-			browser.storage.local.set({ 'numTabs': numTabs });
-		});
-		
-		this.setState({
-			saves: true,
-			saveBtnText: "Saved!"
+			console.log(windows)
+			if (windows.length > 0 && windows[0].length > 0) {
+				browser.storage.local.set({ 'windows': windows });
+				self.setState({
+					saves: true,
+					saveBtnText: "Saved!"
+				});
+				clearTimeout(self.saveBtnMessageTimeout);
+
+				self.saveBtnMessageTimeout = setTimeout(() => {
+					self.setState({ saveBtnText: "Save Tabs" });
+				}, 1000)
+			}
 		});
 
-		clearTimeout(this.saveBtnMessageTimeout);
 
-		this.saveBtnMessageTimeout = setTimeout(() => {
-			this.setState({ saveBtnText: "Save Tabs"});
-		}, 1000)
+
 	}
 
 	handleRestoreClick() {
-		var toRestore = browser.storage.local.get('urls');
+		let windowsPromise = browser.storage.local.get('windows');
 		var self = this;
-		toRestore.then((urls) => {
-			if (Object.keys(urls).length === 0){
-				// console.log("No URLS saved");
+		windowsPromise.then((result) => {
+			console.log(result);
+			if (Object.keys(result).length === 0) {
+				console.log("No URLS saved");
 			}
 			else {
-				self.setState({saves: false});
+				self.setState({ saves: false });
 			}
 		});
 	}
 
 	handleBackClick() {
-		this.setState({saves: true});
+		this.setState({ saves: true });
 	}
 
 	handleAllClick() {
-		var urlObj = browser.storage.local.get('urls');
-		var tabNumObj= browser.storage.local.get('numTabs');
+		let windowsPromise = browser.storage.local.get('windows');
+		// var tabNumObj = browser.storage.local.get('numTabs');
 
 		this.setState({ saves: true });
 
-		urlObj.then(urlsObj => {
-			var urls = urlsObj.urls;
-			if (urls.length === 0) {
+		windowsPromise.then(result => {
+			let windows = result.windows;
+			if (windows.length === 0) {
 				// console.log("No URLS saved");
 			} else {
-				tabNumObj.then(tabNumObj => {
-					var tabNum = tabNumObj.numTabs;
-					var tabIndex = 0;
-					for(var i = 0; i < tabNum.length; i++) {
-						var jump = tabNum[i];
-						var tabs = urls.slice(tabIndex, tabIndex + jump);
-						if(tabs.length == 0){
-							continue;
-						}
-						browser.windows.create({ 'url': tabs });
-						tabIndex += jump;
-					}
-				});
+				// Restore to existing window
+				windows[0].map(url => browser.tabs.create({ 'url': url }));
+				// Create in new windows
+				for (let i = 1; i < windows.length; i++) {
+					browser.windows.create({ 'url': windows[i] });
+				}
+				// windows.map(window => browser.windows.create({'url': window}));
+				// tabNumObj.then(tabNumObj => {
+				// 	var tabNum = tabNumObj.numTabs;
+				// 	var tabIndex = 0;
+				// 	for (var i = 0; i < tabNum.length; i++) {
+				// 		var jump = tabNum[i];
+				// 		var tabs = windows.slice(tabIndex, tabIndex + jump);
+				// 		if (tabs.length == 0) {
+				// 			continue;
+				// 		}
+				// 		browser.windows.create({ 'url': tabs });
+				// 		tabIndex += jump;
+				// 	}
+				// });
 			}
 		});
 	}
 
 	render() {
-		let s_but = null;
-		let r_but = null;
-		let content = null;
+		console.log("Space Render")
+		let saveButton = null;
+		let restoreButton = null;
 		if (this.state.saves) {
-			s_but = <Button className="save-restore-btn" onClick={this.handleSaveClick} name={this.state.saveBtnText}/>;
-			r_but = <Button className="save-restore-btn" onClick={this.handleRestoreClick} name="Restore"/>;
+			saveButton = <Button className="save-restore-btn" onClick={this.handleSaveClick} name={this.state.saveBtnText} />;
+			restoreButton = <Button className="save-restore-btn" onClick={this.handleRestoreClick} name="Restore" />;
 			return (
 				<div className="save-restore-container">
-					{s_but}
-					{r_but}
+					{saveButton}
+					{restoreButton}
 				</div>
 			);
 		} else {
-			let back = <Button className="back-btn" onClick={this.handleBackClick} name="Back"/>;
-			let all = <Button className="restore-all-btn" onClick={this.handleAllClick} name="Restore All"/>;
+			let back = <Button className="back-btn" onClick={this.handleBackClick} name="Back" />;
+			let all = <Button className="restore-all-btn" onClick={this.handleAllClick} name="Restore All" />;
 			return (
 				<div className="restore-menu-container">
 					<div className="restore-menu-action-bar">

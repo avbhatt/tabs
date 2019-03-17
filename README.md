@@ -27,16 +27,18 @@ Clicking the extension results in two options ```Save``` and ```Restore```.
 ![Restoring all links](docs/restore_all.png)
 
 ![New tabs opened](docs/final.png)
-  - These links will open in **new** window(s) respective on where they were when saved.
-    - e.g. If a user has 2 windows open such that Window 1 contains Tab A, Tab B, & Tab C and Window 2 contains Tab D, Tab E: 
-      - Clicking ```Save``` will result in a list containing all of the tabs.
-      - After closing the browser and then reopening, the user will have one active window. Clicking ```Restore All``` will result in 3 windows such that Window 1 contains the tabs the user already had opened, Window 2 contains Tab A, Tab B, & Tab C, and Window 3 contains Tab D and Tab E
+
+- These links will open in **new** window(s) respective on where they were when saved.
+  - e.g. If a user has 2 windows open such that Window 1 contains Tab A, Tab B, & Tab C and Window 2 contains Tab D, Tab E: 
+    - Clicking ```Save``` will result in a list containing all of the tabs.
+    - After closing the browser and then reopening, the user will have one active window. Clicking ```Restore All``` will result in 3 windows such that Window 1 contains the tabs the user already had opened, Window 2 contains Tab A, Tab B, & Tab C, and Window 3 contains Tab D and Tab E
 
 ## Changelog
 
 CSS Enhancements from [shikev](https://github.com/avbhatt/tabs/pull/5)
+
 - Improve look and feel of extension
 
 Changes from [sealj553](https://github.com/avbhatt/tabs/pull/1)
-- Allows for multi-window saving and restoration
 
+- Allows for multi-window saving and restoration
