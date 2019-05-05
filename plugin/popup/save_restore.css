@@ -63,6 +63,9 @@
 .restore-menu-link + .restore-menu-link {
 	margin-top: 5px;
 }
+.restore-menu-link {
+	font-size: medium
+}
 
 /* Restore Window */
 .restore-window-btn {

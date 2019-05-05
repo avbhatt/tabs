@@ -128,7 +128,7 @@ class Space extends React.Component {
 		this.handleAllClick = this.handleAllClick.bind(this);
 		this.state = {
 			saves: true,
-			saveBtnText: "Save Tabs",
+			saveBtnText: "Save",
 			windowState: new Array()
 		};
 	}
@@ -173,7 +173,7 @@ class Space extends React.Component {
 				clearTimeout(self.saveBtnMessageTimeout);
 
 				self.saveBtnMessageTimeout = setTimeout(() => {
-					self.setState({ saveBtnText: "Save Tabs" });
+					self.setState({ saveBtnText: "Save" });
 				}, 1000)
 			}
 		});

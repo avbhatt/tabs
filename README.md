@@ -6,34 +6,49 @@ The motivation behind this extension is to allow for easy tab management without
 
 ## Usage
 
-Clicking the extension results in two options ```Save``` and ```Restore```.
+Clicking the extension results in two options `Save` and `Restore`.
 
 ![Location of Extension](docs/location.png)
 
 ![Options within Extension](docs/click.png)
 
-```Save``` will save the urls of open tabs from every window.
+- `Save` will save the urls of open tabs from every window (replacing any previously saved tabs)
 
-```Restore``` will show a list of the saved urls.
+![Save Tabs](docs/save.png)
+
+- `Restore` will show a list of the saved urls, organized by window
 
 ![List of Saved Links](docs/restore.png)
 
-- Clicking an individual link will open that link in a new tab of your active window
+- Clicking an individual link will open that link in a new tab of the active window
 
 ![Clicking individual link](docs/wikipedia.png)
 
-- Clicking ```Restore All``` will open every link
+- Clicking `Restore To` provides two options to restore the entire window
 
-![Restoring all links](docs/restore_all.png)
+![Clicking Restore To](docs/window.png)
 
-![New tabs opened](docs/final.png)
+- `Current Window` will restore the tabs to the active window
 
-- These links will open in **new** window(s) respective on where they were when saved.
-  - e.g. If a user has 2 windows open such that Window 1 contains Tab A, Tab B, & Tab C and Window 2 contains Tab D, Tab E: 
-    - Clicking ```Save``` will result in a list containing all of the tabs.
-    - After closing the browser and then reopening, the user will have one active window. Clicking ```Restore All``` will result in 3 windows such that Window 1 contains the tabs the user already had opened, Window 2 contains Tab A, Tab B, & Tab C, and Window 3 contains Tab D and Tab E
+![Current Window](docs/current.png)
+
+- `New Window` will restore the tabs to a new window
+
+![New Window](docs/new.png)
+
+- Clicking `Restore All` will restore every group of tabs into a new window
+
+![Restoring all links](docs/all.png)
+
+- Note that clicking `Save` will **overwrite** the currently saved tabs
+
+![Save Overwrite](docs/overwrite.gif)
 
 ## Changelog
+
+Window management
+
+- Allow window-by-window restoration
 
 CSS Enhancements from [shikev](https://github.com/avbhatt/tabs/pull/5)
 
