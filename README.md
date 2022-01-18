@@ -1,6 +1,6 @@
 # Tab Save & Restore
 
-[Firefox extension](https://addons.mozilla.org/en-US/firefox/addon/tab-save-restore/) that allows you to save the open tabs from your window and then restore them at a later time. You can restore them individually or all at once.
+[Firefox extension](https://addons.mozilla.org/firefox/addon/tab-save-restore/) that allows you to save the open tabs from your window and then restore them at a later time. You can restore them individually or all at once.
 
 The motivation behind this extension is to allow for easy tab management without the hassle of being signed in to your browser. Oftentimes, I've wanted to save my open tabs before shutting down my computer, but I prefer not to attach an account to my browser. Before, I would waste time copying and pasting each tab's url to a text file so I could remember what I was doing. Now, by using this extension, it is simply a matter of clicking a few buttons to re-open all of your tabs.
 
